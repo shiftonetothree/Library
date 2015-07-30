@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>图书检索</title>
+    <script src="js/tools.js"></script>
+    <script src="js/vue.js"></script>
+    <script src="js/vue-resource-for-python-csrf.js"></script>
+</head>
+<body>
+    <div id="app">
+        <li>
+            <input type="button"  v-on="click:getBook" value="搜索">
+            <input type="text" v-on="keyup:getBook | key 'enter'" v-model="keyword">
+        </li>
+        <br>
+        <li>
+            <input type="button" v-on="click:addBook,keyup:addBook | key 'enter'" value="添加">
+            <input v-model="newBook.name">-<input v-model="newBook.title">-<input v-model="newBook.author">
+        </li>
+        <br>
+        <li>
+            <input type="button" value="操作" disabled="disabled">
+            <input readonly="readonly" value="名称">-<input readonly="readonly" value="标题">-<input readonly="readonly" value="作者">-<span>时间</span>
+        </li>
+        <br>
+        <li v-repeat="books">
+            <input type="button" v-on="click:updateBook(this)" value="更新">
+            <input v-model="name" readonly="readonly">-<input v-model="title">-<input v-model="author">-<span v-text="time"></span>
+            <input type="button" v-on="click:removeBook(this)" value="删除">
+        </li>
+    </div>
+
+</body>
+<script>
+    var app = new Vue({
+        el:'#app',
+        data: {
+            books:[],
+            keyword: '',
+            newBook:{
+                title:'',
+                name:'',
+                author:''
+            }
+        },
+        methods: {
+            getBook:function(e) {
+                this.$http.get(
+                    '../book/search/'+this.keyword+'/ ',
+                    {},
+                    function (result){
+                        this.books=result;
+                    }
+                );
+            },
+            removeBook:function(e) {
+                this.$http.delete(
+                    '../book/'+e.name,
+                    {csrfmiddlewaretoken:csrftoken},
+                    function (result){
+                        this.books=jfillter(
+                            this.books,
+                            function(t){
+                                return t.name!=e.name;
+                            }
+                        )
+                    }
+                )
+            },
+            addBook:function(e) {
+                this.$http.post(
+                    '../book/ ',
+                    this.newBook,
+                    function (result){
+                        this.books.unshift(result);
+                    }
+                )
+            },
+            updateBook:function(e) {
+                this.$http.put(
+                    '../book/'+e.name,
+                    e.$data,//这里直接用e的话会出错
+                    function (result){
+
+                    }
+                )
+            }
+        }
+    });
+
+</script>
+</html>
